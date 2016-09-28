@@ -83,6 +83,20 @@ def results_to_str(stats: list, times: List[float], concurrency: int) -> str:
     return '\n'.join(lines)
 
 
+def results_to_csv(stats: list, times: List[float], concurrency: int) -> str:
+    results = make_benchmark_results(stats, times, concurrency)
+    header = 'doc_min_len,doc_avg_len,doc_max_len,concurrency,' \
+             'completed_requests,reqs_per_sec,conn_min_time,conn_avg_time,' \
+             'conn_max_time\n'
+    body = '{},{},{},{},{},{},{},{},{}'.format(
+        results.min_doc_len, results.avg_doc_len, results.max_doc_len,
+        results.concurrency, results.completed_requests,
+        results.reqs_per_sec, results.min_conn_time, results.avg_conn_time,
+        results.max_conn_time
+    )
+    return header + body
+
+
 def inc(array, index):
     array[index] = array[index] + 1 if index in array else 1
 
