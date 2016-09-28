@@ -10,9 +10,11 @@ import io
 import threading
 import argparse
 
-#misc utilities
+from . import summary
+
 
 exit_using_ctr_c = False
+
 
 def signal_handler(signal, frame):
     global exit_using_ctr_c
@@ -25,13 +27,6 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGUSR1, signal_handler_USR1)
 
 
-def inc(array, index):
-    if not index in array:
-        array[index] = 0
-    array[index] = array[index] + 1
-
-def avg(iter):
-    return sum(iter) / len(iter)
 
 """
 Thread dedicated for outputing results/stats. This prevents from stopping main
@@ -169,6 +164,8 @@ class pyhttp():
         parser.add_argument('--end-with-shutdown', action='store_true', help='Call shutdown before close')
         parser.add_argument('-t', '--timeout', metavar='timeout', default=30, type=int, help='Maximum number of seconds to wait before the socket times out.')
         parser.add_argument('url', metavar='URL', type=str)
+        parser.add_argument('-o', '--output', metavar='results.json', type=str,
+                            help='Write benchmark results to csv file.')
         self.args = parser.parse_args()
 
     def stat_line(self, idx, msg):
@@ -179,64 +176,29 @@ class pyhttp():
             time_diff = "%fs" % (time_end - time_start)
         print("%s %s" % (time_diff, msg))
 
-    def statistics(self):
+    def print_statistics(self):
         global exit_using_ctr_c
-        size = []
-        time = []
-        retcode = {}
-        retcode[200] = 0
-        retcode[404] = 0
-        retcode[500] = 0
-
-
         if exit_using_ctr_c:
-            print('\x1b[1;101;92m')
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('!!!!                                          !!!!')
-            print('!!!!  WARNING:                                !!!!')
-            print('!!!!  CTR+C is DETECTED                       !!!!')
-            print('!!!!  You terminating your benchmark session  !!!!')
-            print('!!!!                                          !!!!')
-            print('!!!!  This will make benchmark                !!!!')
-            print('!!!!  results meaningless.                    !!!!')
-            print('!!!!                                          !!!!')
-            print('!!!!  DO NOT PUBLISH THESE RESULTS OR         !!!!')
-            print('!!!!  MAKE ANY DECISIONS BASED ON THEM        !!!!')
-            print('!!!!                                          !!!!')
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('\x1b[2;47;37m')
+            summary.warn_sigint()
 
         self.stat_line(0, "Structures init")
         self.stat_line(1, "Threads create")
         self.stat_line(2, "Threads run")
         self.stat_line(3, "... test ... threads join.")
         print("=====================")
-        completed_results = 0
-        for stat in self.stats:
-            if 'size' in stat:
-                size.append(stat['size'])
-                completed_results = completed_results + 1
-
-            if 'time' in stat:
-                time.append(stat['time'])
-
-            if 'status' in stat:
-                inc(retcode, stat['status'])
-
-        print('Document Length:    [min: %d, avg: %f, max: %d] Bytes' % (min(size), avg(size), max(size)))
-        print('Concurrency Level:    %d' % (self.args.concurrency))
-        print('Complete requests:    %d' % (completed_results))
-        print('Requests per second:    %f [#/sec] (mean)' % (completed_results / (self.times[4] - self.times[3])))
-        print('Connection Times Total:    [min: %f, avg: %f, max: %f] seconds' % (min(time), avg(time), max(time)))
-        print('Status codes:')
-        for code in retcode:
-            print('\t%s %d' % (code, retcode[code]))
+        print(summary.results_to_str(self.stats, self.times,
+                                     self.args.concurrency))
         print("=====================")
         if exit_using_ctr_c:
             print('\x1b[0m')
         print('done')
+
+        if self.args.output:
+            write_to(
+                self.args.output,
+                summary.results_to_json(self.stats, self.times,
+                                        self.args.concurrency)
+            )
 
     def init(self):
         self.stats = [{}] * self.args.requests
@@ -284,13 +246,19 @@ class pyhttp():
         self.arguments_parse()
         self.init()
         self.benchmark()
-        self.statistics()
+        self.print_statistics()
         if exit_using_ctr_c:
             os._exit(1)
 
 def main():
     tool = pyhttp()
     tool.run()
+
+
+def write_to(fname: str, text: str) -> None:
+    with open(fname, 'w') as f:
+        f.write(text)
+
 
 if __name__ == '__main__':
     main()
