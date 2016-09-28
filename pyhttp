@@ -1,14 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
 import time
-import Queue
+import queue
 import struct
 import signal
 import socket
 import pycurl
-import StringIO
+import io
 import threading
 import argparse
 
@@ -42,7 +42,7 @@ threads on I/O, sync, flush
 class output_worker(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
-        self.output_queue = Queue.Queue()
+        self.output_queue = queue.Queue()
 
     def put(self, message):
         self.output_queue.put(message)
@@ -95,14 +95,9 @@ class worker(threading.Thread):
 
             curl = pycurl.Curl()
             curl.setopt(pycurl.CAINFO, "")
-            buffer = StringIO.StringIO()
             curl.setopt(pycurl.URL, self.args.url)
             self.buffer_len = 0
-            try:
-                curl.setopt(pycurl.WRITEDATA, buffer)
-            except:
-                buffer = None
-                curl.setopt(pycurl.WRITEFUNCTION, self.buffer_write)
+            curl.setopt(pycurl.WRITEFUNCTION, self.buffer_write)
             curl.setopt(pycurl.CONNECTTIMEOUT, self.args.timeout)
             curl.setopt(pycurl.SSL_VERIFYPEER, False)
             curl.setopt(pycurl.SSL_VERIFYHOST, False)
@@ -140,9 +135,6 @@ class worker(threading.Thread):
                     stat_char = 'C'
                 else:
                     raise
-
-            if buffer != None:
-                self.buffer_len = buffer.len
 
             self.pyhttp.stats[task_id] = {
                 'size': self.buffer_len,
@@ -187,7 +179,7 @@ class pyhttp():
         time_diff = "Uknown   "
         if time_start != None and time_end != None:
             time_diff = "%fs" % (time_end - time_start)
-        print "%s %s" % (time_diff, msg)
+        print("%s %s" % (time_diff, msg))
 
     def statistics(self):
         global exit_using_ctr_c
@@ -200,29 +192,29 @@ class pyhttp():
 
 
         if exit_using_ctr_c:
-            print '\x1b[1;101;92m'
-            print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-            print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-            print '!!!!                                          !!!!'
-            print '!!!!  WARNING:                                !!!!'
-            print '!!!!  CTR+C is DETECTED                       !!!!'
-            print '!!!!  You terminating your benchmark session  !!!!'
-            print '!!!!                                          !!!!'
-            print '!!!!  This will make benchmark                !!!!'
-            print '!!!!  results meaningless.                    !!!!'
-            print '!!!!                                          !!!!'
-            print '!!!!  DO NOT PUBLISH THESE RESULTS OR         !!!!'
-            print '!!!!  MAKE ANY DECISIONS BASED ON THEM        !!!!'
-            print '!!!!                                          !!!!'
-            print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-            print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-            print '\x1b[2;47;37m'
+            print('\x1b[1;101;92m')
+            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            print('!!!!                                          !!!!')
+            print('!!!!  WARNING:                                !!!!')
+            print('!!!!  CTR+C is DETECTED                       !!!!')
+            print('!!!!  You terminating your benchmark session  !!!!')
+            print('!!!!                                          !!!!')
+            print('!!!!  This will make benchmark                !!!!')
+            print('!!!!  results meaningless.                    !!!!')
+            print('!!!!                                          !!!!')
+            print('!!!!  DO NOT PUBLISH THESE RESULTS OR         !!!!')
+            print('!!!!  MAKE ANY DECISIONS BASED ON THEM        !!!!')
+            print('!!!!                                          !!!!')
+            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            print('\x1b[2;47;37m')
 
         self.stat_line(0, "Structures init")
         self.stat_line(1, "Threads create")
         self.stat_line(2, "Threads run")
         self.stat_line(3, "... test ... threads join.")
-        print "====================="
+        print("=====================")
         completed_results = 0
         for stat in self.stats:
             if 'size' in stat:
@@ -235,22 +227,22 @@ class pyhttp():
             if 'status' in stat:
                 inc(retcode, stat['status'])
 
-        print 'Document Length:    [min: %d, avg: %f, max: %d] Bytes' % (min(size), avg(size), max(size))
-        print 'Concurrency Level:    %d' % (self.args.concurrency)
-        print 'Complete requests:    %d' % (completed_results)
-        print 'Requests per second:    %f [#/sec] (mean)' % (completed_results / (self.times[4] - self.times[3]))
-        print 'Connection Times Total:    [min: %f, avg: %f, max: %f] seconds' % (min(time), avg(time), max(time))
-        print 'Status codes:'
+        print('Document Length:    [min: %d, avg: %f, max: %d] Bytes' % (min(size), avg(size), max(size)))
+        print('Concurrency Level:    %d' % (self.args.concurrency))
+        print('Complete requests:    %d' % (completed_results))
+        print('Requests per second:    %f [#/sec] (mean)' % (completed_results / (self.times[4] - self.times[3])))
+        print('Connection Times Total:    [min: %f, avg: %f, max: %f] seconds' % (min(time), avg(time), max(time)))
+        print('Status codes:')
         for code in retcode:
-            print '\t%s %d' % (code, retcode[code])
-        print "====================="
+            print('\t%s %d' % (code, retcode[code]))
+        print("=====================")
         if exit_using_ctr_c:
-            print '\x1b[0m'
-        print 'done'
+            print('\x1b[0m')
+        print('done')
 
     def init(self):
         self.stats = [{}] * self.args.requests
-        self.tasks = Queue.Queue()
+        self.tasks = queue.Queue()
         self.times = [None] * 5
         self.output = output_worker()
         self.output.start()
