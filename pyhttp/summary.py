@@ -42,11 +42,7 @@ class BenchmarkResults:
 
 def make_benchmark_results(stats: list, times: List[float],
                  concurrency: int) -> BenchmarkResults:
-    retcode = {}
-    retcode[200] = 0
-    retcode[404] = 0
-    retcode[500] = 0
-
+    retcode = {200: 0, 404: 0, 500: 0}
     size = []
     time = []
 
@@ -88,9 +84,7 @@ def results_to_str(stats: list, times: List[float], concurrency: int) -> None:
 
 
 def inc(array, index):
-    if not index in array:
-        array[index] = 0
-    array[index] = array[index] + 1
+    array[index] = array[index] + 1 if index in array else 1
 
 
 def avg(iter):
