@@ -164,6 +164,8 @@ class pyhttp():
         parser.add_argument('--end-with-shutdown', action='store_true', help='Call shutdown before close')
         parser.add_argument('-t', '--timeout', metavar='timeout', default=30, type=int, help='Maximum number of seconds to wait before the socket times out.')
         parser.add_argument('url', metavar='URL', type=str)
+        parser.add_argument('-o', '--output', metavar='results.json', type=str,
+                            help='Write benchmark results to csv file.')
         self.args = parser.parse_args()
 
     def stat_line(self, idx, msg):
@@ -190,6 +192,13 @@ class pyhttp():
         if exit_using_ctr_c:
             print('\x1b[0m')
         print('done')
+
+        if self.args.output:
+            write_to(
+                self.args.output,
+                summary.results_to_json(self.stats, self.times,
+                                        self.args.concurrency)
+            )
 
     def init(self):
         self.stats = [{}] * self.args.requests
@@ -244,6 +253,12 @@ class pyhttp():
 def main():
     tool = pyhttp()
     tool.run()
+
+
+def write_to(fname: str, text: str) -> None:
+    with open(fname, 'w') as f:
+        f.write(text)
+
 
 if __name__ == '__main__':
     main()
