@@ -179,7 +179,7 @@ class pyhttp():
             time_diff = "%fs" % (time_end - time_start)
         print("%s %s" % (time_diff, msg))
 
-    def statistics(self):
+    def print_statistics(self):
         global exit_using_ctr_c
         size = []
         time = []
@@ -284,7 +284,7 @@ class pyhttp():
         self.arguments_parse()
         self.init()
         self.benchmark()
-        self.statistics()
+        self.print_statistics()
         if exit_using_ctr_c:
             os._exit(1)
 
