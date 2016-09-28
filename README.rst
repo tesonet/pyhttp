@@ -3,7 +3,7 @@ About
 =====
 
 `pyhttp` is HTTP/HTTPS benchmarking tool. It supports proxy tunneling.
-It's use is identical to `ab <http://httpd.apache.org/docs/2.2/programs/ab.html>`.
+It's use is identical to `ab <http://httpd.apache.org/docs/2.2/programs/ab.html>`_.
 
 The motivation behind this tool is that `ab` does not support proxy tunneling
 when testing with HTTPS.
