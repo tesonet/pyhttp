@@ -1,5 +1,6 @@
 """Benchmark summary related utilities."""
 
+import json
 from typing import List, Dict
 
 
@@ -95,6 +96,29 @@ def results_to_csv(stats: list, times: List[float], concurrency: int) -> str:
         results.max_conn_time
     )
     return header + body
+
+
+def results_to_json(stats: list, times: List[float], concurrency: int) -> str:
+    results = make_benchmark_results(stats, times, concurrency)
+    header = 'doc_min_len,doc_avg_len,doc_max_len,concurrency,' \
+             'completed_requests,reqs_per_sec,conn_min_time,conn_avg_time,' \
+             'conn_max_time\n'
+    return json.dumps({
+        'document_length': {
+            'min': results.min_doc_len,
+            'avg': results.avg_doc_len,
+            'max': results.max_doc_len,
+        },
+        'concurrency': results.concurrency,
+        'completed_requests': results.completed_requests,
+        'requests_per_second': results.reqs_per_sec,
+        'connection_time': {
+            'min': results.min_conn_time,
+            'avg': results.avg_conn_time,
+            'max': results.max_conn_time,
+        },
+        'status_codes': results.status_codes,
+    })
 
 
 def inc(array, index):
