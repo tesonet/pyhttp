@@ -27,13 +27,6 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGUSR1, signal_handler_USR1)
 
 
-def inc(array, index):
-    if not index in array:
-        array[index] = 0
-    array[index] = array[index] + 1
-
-def avg(iter):
-    return sum(iter) / len(iter)
 
 """
 Thread dedicated for outputing results/stats. This prevents from stopping main
@@ -183,13 +176,6 @@ class pyhttp():
 
     def print_statistics(self):
         global exit_using_ctr_c
-        size = []
-        time = []
-        retcode = {}
-        retcode[200] = 0
-        retcode[404] = 0
-        retcode[500] = 0
-
         if exit_using_ctr_c:
             summary.warn_sigint()
 
@@ -198,26 +184,8 @@ class pyhttp():
         self.stat_line(2, "Threads run")
         self.stat_line(3, "... test ... threads join.")
         print("=====================")
-        completed_results = 0
-        for stat in self.stats:
-            if 'size' in stat:
-                size.append(stat['size'])
-                completed_results = completed_results + 1
-
-            if 'time' in stat:
-                time.append(stat['time'])
-
-            if 'status' in stat:
-                inc(retcode, stat['status'])
-
-        print('Document Length:    [min: %d, avg: %f, max: %d] Bytes' % (min(size), avg(size), max(size)))
-        print('Concurrency Level:    %d' % (self.args.concurrency))
-        print('Complete requests:    %d' % (completed_results))
-        print('Requests per second:    %f [#/sec] (mean)' % (completed_results / (self.times[4] - self.times[3])))
-        print('Connection Times Total:    [min: %f, avg: %f, max: %f] seconds' % (min(time), avg(time), max(time)))
-        print('Status codes:')
-        for code in retcode:
-            print('\t%s %d' % (code, retcode[code]))
+        print(summary.results_to_str(self.stats, self.times,
+                                     self.args.concurrency))
         print("=====================")
         if exit_using_ctr_c:
             print('\x1b[0m')
