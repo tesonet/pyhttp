@@ -10,9 +10,11 @@ import io
 import threading
 import argparse
 
-#misc utilities
+from . import summary
+
 
 exit_using_ctr_c = False
+
 
 def signal_handler(signal, frame):
     global exit_using_ctr_c
@@ -188,25 +190,8 @@ class pyhttp():
         retcode[404] = 0
         retcode[500] = 0
 
-
         if exit_using_ctr_c:
-            print('\x1b[1;101;92m')
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('!!!!                                          !!!!')
-            print('!!!!  WARNING:                                !!!!')
-            print('!!!!  CTR+C is DETECTED                       !!!!')
-            print('!!!!  You terminating your benchmark session  !!!!')
-            print('!!!!                                          !!!!')
-            print('!!!!  This will make benchmark                !!!!')
-            print('!!!!  results meaningless.                    !!!!')
-            print('!!!!                                          !!!!')
-            print('!!!!  DO NOT PUBLISH THESE RESULTS OR         !!!!')
-            print('!!!!  MAKE ANY DECISIONS BASED ON THEM        !!!!')
-            print('!!!!                                          !!!!')
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('\x1b[2;47;37m')
+            summary.warn_sigint()
 
         self.stat_line(0, "Structures init")
         self.stat_line(1, "Threads create")

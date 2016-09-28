@@ -1,0 +1,20 @@
+"""Benchmark summary related utilities."""
+
+def warn_sigint() -> None:
+    print('\x1b[1;101;92m')
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    print('!!!!                                          !!!!')
+    print('!!!!  WARNING:                                !!!!')
+    print('!!!!  CTR+C is DETECTED                       !!!!')
+    print('!!!!  You terminating your benchmark session  !!!!')
+    print('!!!!                                          !!!!')
+    print('!!!!  This will make benchmark                !!!!')
+    print('!!!!  results meaningless.                    !!!!')
+    print('!!!!                                          !!!!')
+    print('!!!!  DO NOT PUBLISH THESE RESULTS OR         !!!!')
+    print('!!!!  MAKE ANY DECISIONS BASED ON THEM        !!!!')
+    print('!!!!                                          !!!!')
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    print('\x1b[2;47;37m')
