@@ -149,10 +149,29 @@ class worker(threading.Thread):
             self.pyhttp.output.put(stat_char)
 
 
+class Timeline:
+    def __init__(self) -> None:
+        self.log = []
+
+        self._last_event = None
+
+    def start(self, event: str) -> None:
+        self._last_event = {'event': event, 'started': time.time()}
+
+    def finish(self) -> None:
+        """Finishes last event."""
+        self._last_event['finished'] = time.time()
+        self._last_event['duration'] = self._last_event['finished'] - \
+                                       self._last_event['started']
+        self.log.append(self._last_event)
+        self._last_event = None
+
+
 class HttpPerformanceTest():
     def __init__(self):
         self.args = None
         self.stats = None
+        self.timeline = Timeline()
 
     def arguments_parse(self):
         parser = argparse.ArgumentParser()
@@ -169,30 +188,25 @@ class HttpPerformanceTest():
                             help='Write benchmark results to csv file.')
         self.args = parser.parse_args()
 
-    def print_timeline_item(self, idx: int, msg: str) -> None:
-        time_start = self.benchmark_timeline[idx]
-        time_end = self.benchmark_timeline[idx + 1]
-        time_diff = "Uknown   "
-        if time_start != None and time_end != None:
-            time_diff = "%fs" % (time_end - time_start)
-        print("%s %s" % (time_diff, msg))
+    def print_timeline(self) -> None:
+        for timestamp in self.timeline.log:
+            print('{:.6f}s {}'.format(timestamp['duration'],
+                                      timestamp['event']))
 
     def print_statistics(self):
         global exit_using_ctr_c
         if exit_using_ctr_c:
             summary.warn_sigint()
 
-        self.print_timeline_item(0, "Structures init")
-        self.print_timeline_item(1, "Threads create")
-        self.print_timeline_item(2, "Threads run")
-        self.print_timeline_item(3, "... test ... threads join.")
+        self.print_timeline()
         print("=====================")
-        print(summary.results_to_str(self.stats, self.benchmark_timeline,
-                                     self.args.concurrency))
+        print(summary.results_to_str(
+            self.stats, self.timeline.log[-1]['duration'],
+            self.args.concurrency
+        ))
         print("=====================")
         if exit_using_ctr_c:
             print('\x1b[0m')
-        print('done')
 
         if self.args.output:
             write_to(
@@ -213,31 +227,34 @@ class HttpPerformanceTest():
 
         threads = []
 
-        self.benchmark_timeline[0] = time.time()
+        self.timeline.start('Init data')
         for i in range(self.args.requests):
             self.tasks.put(i)
 
         for i in range(self.args.concurrency):
             self.tasks.put(None)
+        self.timeline.finish()
 
-        self.benchmark_timeline[1] = time.time()
+        self.timeline.start('Create threads')
         for i in range(self.args.concurrency):
             thread = worker(self)
             threads.append(thread)
+        self.timeline.finish()
 
-        self.benchmark_timeline[2] = time.time()
+        self.timeline.start('Run threads')
         for thread in threads:
             thread.start()
 
         thread_waiter = thread_waiter_worker(threads)
         thread_waiter.start()
+        self.timeline.finish()
 
-        self.benchmark_timeline[3] = time.time()
+        self.timeline.start('Run tests')
         time.sleep(100000000)
         if not exit_using_ctr_c:
             thread_waiter.join()
+        self.timeline.finish()
 
-        self.benchmark_timeline[4] = time.time()
         self.output.put(None)
         self.output.join()
 

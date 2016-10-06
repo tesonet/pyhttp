@@ -1,7 +1,7 @@
 """Benchmark summary related utilities."""
 
 import json
-from typing import List, Dict
+from typing import Dict
 
 
 def warn_sigint() -> None:
@@ -41,7 +41,7 @@ class BenchmarkResults:
         self.status_codes = status_codes
 
 
-def make_benchmark_results(stats: list, times: List[float],
+def make_benchmark_results(stats: list, duration: float,
                  concurrency: int) -> BenchmarkResults:
     retcode = {'200': 0, '404': 0, '500': 0}
     size = []
@@ -61,12 +61,12 @@ def make_benchmark_results(stats: list, times: List[float],
 
     return BenchmarkResults(
             min(size), avg(size), max(size), concurrency, completed_results,
-            completed_results / (times[4] - times[3]),
+            completed_results / duration,
             min(time), avg(time), max(time), retcode)
 
 
-def results_to_str(stats: list, times: List[float], concurrency: int) -> str:
-    results = make_benchmark_results(stats, times, concurrency)
+def results_to_str(stats: list, duration: float, concurrency: int) -> str:
+    results = make_benchmark_results(stats, duration, concurrency)
     lines = [
         'Document Length:    [min: %d, avg: %f, max: %d] Bytes' \
             % (results.min_doc_len, results.avg_doc_len, results.max_doc_len),
@@ -84,7 +84,7 @@ def results_to_str(stats: list, times: List[float], concurrency: int) -> str:
     return '\n'.join(lines)
 
 
-def results_to_csv(stats: list, times: List[float], concurrency: int) -> str:
+def results_to_csv(stats: list, duration: float, concurrency: int) -> str:
     results = make_benchmark_results(stats, times, concurrency)
     header = 'doc_min_len,doc_avg_len,doc_max_len,concurrency,' \
              'completed_requests,reqs_per_sec,conn_min_time,conn_avg_time,' \
@@ -98,8 +98,8 @@ def results_to_csv(stats: list, times: List[float], concurrency: int) -> str:
     return header + body
 
 
-def results_to_json(stats: list, times: List[float], concurrency: int) -> str:
-    results = make_benchmark_results(stats, times, concurrency)
+def results_to_json(stats: list, duration: float, concurrency: int) -> str:
+    results = make_benchmark_results(stats, duration, concurrency)
     header = 'doc_min_len,doc_avg_len,doc_max_len,concurrency,' \
              'completed_requests,reqs_per_sec,conn_min_time,conn_avg_time,' \
              'conn_max_time\n'
