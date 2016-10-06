@@ -170,8 +170,8 @@ class pyhttp():
         self.args = parser.parse_args()
 
     def print_timeline_item(self, idx: int, msg: str) -> None:
-        time_start = self.times[idx]
-        time_end = self.times[idx + 1]
+        time_start = self.benchmark_timeline[idx]
+        time_end = self.benchmark_timeline[idx + 1]
         time_diff = "Uknown   "
         if time_start != None and time_end != None:
             time_diff = "%fs" % (time_end - time_start)
@@ -187,7 +187,7 @@ class pyhttp():
         self.print_timeline_item(2, "Threads run")
         self.print_timeline_item(3, "... test ... threads join.")
         print("=====================")
-        print(summary.results_to_str(self.stats, self.times,
+        print(summary.results_to_str(self.stats, self.benchmark_timeline,
                                      self.args.concurrency))
         print("=====================")
         if exit_using_ctr_c:
@@ -197,14 +197,14 @@ class pyhttp():
         if self.args.output:
             write_to(
                 self.args.output,
-                summary.results_to_json(self.stats, self.times,
+                summary.results_to_json(self.stats, self.benchmark_timeline,
                                         self.args.concurrency)
             )
 
     def init(self):
         self.stats = [{}] * self.args.requests
         self.tasks = queue.Queue()
-        self.times = [None] * 5
+        self.benchmark_timeline = [None] * 5
         self.output = output_worker()
         self.output.start()
 
@@ -213,31 +213,31 @@ class pyhttp():
 
         threads = []
 
-        self.times[0] = time.time()
+        self.benchmark_timeline[0] = time.time()
         for i in range(self.args.requests):
             self.tasks.put(i)
 
         for i in range(self.args.concurrency):
             self.tasks.put(None)
 
-        self.times[1] = time.time()
+        self.benchmark_timeline[1] = time.time()
         for i in range(self.args.concurrency):
             thread = worker(self)
             threads.append(thread)
 
-        self.times[2] = time.time()
+        self.benchmark_timeline[2] = time.time()
         for thread in threads:
             thread.start()
 
         thread_waiter = thread_waiter_worker(threads)
         thread_waiter.start()
 
-        self.times[3] = time.time()
+        self.benchmark_timeline[3] = time.time()
         time.sleep(100000000)
         if not exit_using_ctr_c:
             thread_waiter.join()
 
-        self.times[4] = time.time()
+        self.benchmark_timeline[4] = time.time()
         self.output.put(None)
         self.output.join()
 
