@@ -149,7 +149,7 @@ class worker(threading.Thread):
             self.pyhttp.output.put(stat_char)
 
 
-class pyhttp():
+class HttpPerformanceTest():
     def __init__(self):
         self.args = None
         self.stats = None
@@ -252,7 +252,7 @@ class pyhttp():
             os._exit(1)
 
 def main():
-    tool = pyhttp()
+    tool = HttpPerformanceTest()
     tool.run()
 
 
