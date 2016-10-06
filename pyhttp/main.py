@@ -148,10 +148,30 @@ class worker(threading.Thread):
                 sock.close()
             self.pyhttp.output.put(stat_char)
 
-class pyhttp():
+
+class Timeline:
+    def __init__(self) -> None:
+        self.log = []
+
+        self._last_event = None
+
+    def start(self, event: str) -> None:
+        self._last_event = {'event': event, 'started': time.time()}
+
+    def finish(self) -> None:
+        """Finishes last event."""
+        self._last_event['finished'] = time.time()
+        self._last_event['duration'] = self._last_event['finished'] - \
+                                       self._last_event['started']
+        self.log.append(self._last_event)
+        self._last_event = None
+
+
+class HttpPerformanceTest():
     def __init__(self):
         self.args = None
         self.stats = None
+        self.timeline = Timeline()
 
     def arguments_parse(self):
         parser = argparse.ArgumentParser()
@@ -168,42 +188,37 @@ class pyhttp():
                             help='Write benchmark results to csv file.')
         self.args = parser.parse_args()
 
-    def stat_line(self, idx, msg):
-        time_start = self.times[idx]
-        time_end = self.times[idx + 1]
-        time_diff = "Uknown   "
-        if time_start != None and time_end != None:
-            time_diff = "%fs" % (time_end - time_start)
-        print("%s %s" % (time_diff, msg))
+    def print_timeline(self) -> None:
+        for timestamp in self.timeline.log:
+            print('{:.6f}s {}'.format(timestamp['duration'],
+                                      timestamp['event']))
 
     def print_statistics(self):
         global exit_using_ctr_c
         if exit_using_ctr_c:
             summary.warn_sigint()
 
-        self.stat_line(0, "Structures init")
-        self.stat_line(1, "Threads create")
-        self.stat_line(2, "Threads run")
-        self.stat_line(3, "... test ... threads join.")
+        self.print_timeline()
         print("=====================")
-        print(summary.results_to_str(self.stats, self.times,
-                                     self.args.concurrency))
+        print(summary.results_to_str(
+            self.stats, self.timeline.log[-1]['duration'],
+            self.args.concurrency
+        ))
         print("=====================")
         if exit_using_ctr_c:
             print('\x1b[0m')
-        print('done')
 
         if self.args.output:
             write_to(
                 self.args.output,
-                summary.results_to_json(self.stats, self.times,
+                summary.results_to_json(self.stats, self.benchmark_timeline,
                                         self.args.concurrency)
             )
 
     def init(self):
         self.stats = [{}] * self.args.requests
         self.tasks = queue.Queue()
-        self.times = [None] * 5
+        self.benchmark_timeline = [None] * 5
         self.output = output_worker()
         self.output.start()
 
@@ -212,31 +227,34 @@ class pyhttp():
 
         threads = []
 
-        self.times[0] = time.time()
+        self.timeline.start('Init data')
         for i in range(self.args.requests):
             self.tasks.put(i)
 
         for i in range(self.args.concurrency):
             self.tasks.put(None)
+        self.timeline.finish()
 
-        self.times[1] = time.time()
+        self.timeline.start('Create threads')
         for i in range(self.args.concurrency):
             thread = worker(self)
             threads.append(thread)
+        self.timeline.finish()
 
-        self.times[2] = time.time()
+        self.timeline.start('Run threads')
         for thread in threads:
             thread.start()
 
         thread_waiter = thread_waiter_worker(threads)
         thread_waiter.start()
+        self.timeline.finish()
 
-        self.times[3] = time.time()
+        self.timeline.start('Run tests')
         time.sleep(100000000)
         if not exit_using_ctr_c:
             thread_waiter.join()
+        self.timeline.finish()
 
-        self.times[4] = time.time()
         self.output.put(None)
         self.output.join()
 
@@ -251,8 +269,7 @@ class pyhttp():
             os._exit(1)
 
 def main():
-    tool = pyhttp()
-    tool.run()
+    HttpPerformanceTest().run()
 
 
 def write_to(fname: str, text: str) -> None:
