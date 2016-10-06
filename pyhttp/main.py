@@ -168,7 +168,7 @@ class pyhttp():
                             help='Write benchmark results to csv file.')
         self.args = parser.parse_args()
 
-    def stat_line(self, idx, msg):
+    def stat_line(self, idx: int, msg: str) -> None:
         time_start = self.times[idx]
         time_end = self.times[idx + 1]
         time_diff = "Uknown   "
