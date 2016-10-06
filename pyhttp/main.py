@@ -252,8 +252,7 @@ class HttpPerformanceTest():
             os._exit(1)
 
 def main():
-    tool = HttpPerformanceTest()
-    tool.run()
+    HttpPerformanceTest().run()
 
 
 def write_to(fname: str, text: str) -> None:
