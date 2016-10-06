@@ -148,6 +148,7 @@ class worker(threading.Thread):
                 sock.close()
             self.pyhttp.output.put(stat_char)
 
+
 class pyhttp():
     def __init__(self):
         self.args = None
@@ -168,7 +169,7 @@ class pyhttp():
                             help='Write benchmark results to csv file.')
         self.args = parser.parse_args()
 
-    def stat_line(self, idx: int, msg: str) -> None:
+    def print_timeline_item(self, idx: int, msg: str) -> None:
         time_start = self.times[idx]
         time_end = self.times[idx + 1]
         time_diff = "Uknown   "
@@ -181,10 +182,10 @@ class pyhttp():
         if exit_using_ctr_c:
             summary.warn_sigint()
 
-        self.stat_line(0, "Structures init")
-        self.stat_line(1, "Threads create")
-        self.stat_line(2, "Threads run")
-        self.stat_line(3, "... test ... threads join.")
+        self.print_timeline_item(0, "Structures init")
+        self.print_timeline_item(1, "Threads create")
+        self.print_timeline_item(2, "Threads run")
+        self.print_timeline_item(3, "... test ... threads join.")
         print("=====================")
         print(summary.results_to_str(self.stats, self.times,
                                      self.args.concurrency))
