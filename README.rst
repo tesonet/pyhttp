@@ -16,7 +16,7 @@ Usage
 
 Get dependencies::
 
-    $ apt-get install libcurl4-openssl-dev
+    $ apt-get install libcurl4-openssl-dev python3-dev libssl-dev
     $ virtualenv --python3 pyenv
     $ pyenv/bin/pip install -r requirements/prod.txt
 
