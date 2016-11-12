@@ -8,9 +8,8 @@ import socket
 import pycurl
 import io
 import threading
-import argparse
 
-from . import summary
+from . import summary, cli
 
 
 exit_using_ctr_c = False
@@ -164,22 +163,9 @@ class Timeline:
 
 class HttpPerformanceTest():
     def __init__(self):
-        self.args = None
+        self.args = cli.parse_args(sys.argv[1:])
         self.stats = None
         self.timeline = Timeline()
-
-    def arguments_parse(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-c', '--concurrency', metavar='N', default=1, type=int, help='Number of multiple requests to perform at a time')
-        parser.add_argument('-H', '--header', metavar='custom-header', default=[], nargs='*', type=str, help='Append extra headers to the request.')
-        parser.add_argument('-n', '--requests', metavar='N', default=1, type=int, help='Number of requests to perform for the benchmarking session')
-        parser.add_argument('-P', '--proxy-auth', metavar='proxy-auth-username:password', type=str, help='Supply BASIC Authentication credentials to a proxy en-route.')
-        parser.add_argument('-X', '--proxy', metavar='proxy:port', type=str, help='Use a proxy server for the requests.')
-        parser.add_argument('-t', '--timeout', metavar='timeout', default=30, type=int, help='Maximum number of seconds to wait before the socket times out.')
-        parser.add_argument('url', metavar='URL', type=str)
-        parser.add_argument('-o', '--output', metavar='results.json', type=str,
-                            help='Write benchmark results to csv file.')
-        self.args = parser.parse_args()
 
     def print_timeline(self) -> None:
         for timestamp in self.timeline.log:
@@ -254,7 +240,6 @@ class HttpPerformanceTest():
     def run(self):
         global exit_using_ctr_c
 
-        self.arguments_parse()
         self.init()
         self.benchmark()
         self.print_statistics()
