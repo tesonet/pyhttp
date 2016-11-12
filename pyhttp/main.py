@@ -140,11 +140,6 @@ class worker(threading.Thread):
 
             curl.close()
             if fd != -1:
-                if self.args.end_with_shutdown:
-                    sock.shutdown(socket.SHUT_RDWR)
-                if self.args.end_with_RST:
-                    socket_SO_LINGER_value = struct.pack('ii', 1, 0)
-                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, socket_SO_LINGER_value)
                 sock.close()
             self.pyhttp.output.put(stat_char)
 
@@ -180,8 +175,6 @@ class HttpPerformanceTest():
         parser.add_argument('-n', '--requests', metavar='N', default=1, type=int, help='Number of requests to perform for the benchmarking session')
         parser.add_argument('-P', '--proxy-auth', metavar='proxy-auth-username:password', type=str, help='Supply BASIC Authentication credentials to a proxy en-route.')
         parser.add_argument('-X', '--proxy', metavar='proxy:port', type=str, help='Use a proxy server for the requests.')
-        parser.add_argument('--end-with-RST', action='store_true', help='Finish TCP session with RST')
-        parser.add_argument('--end-with-shutdown', action='store_true', help='Call shutdown before close')
         parser.add_argument('-t', '--timeout', metavar='timeout', default=30, type=int, help='Maximum number of seconds to wait before the socket times out.')
         parser.add_argument('url', metavar='URL', type=str)
         parser.add_argument('-o', '--output', metavar='results.json', type=str,
